@@ -200,8 +200,8 @@ class MSequenceGenerator:
         IGNORE_FOR_SPHINX_DOCS
     """
 
-    def __init__(self, tasks_json, batch_gen_params, reference_genome, 
-                 chrom_sizes, chroms=None, 
+    def __init__(self, tasks_json, batch_gen_params,
+                 chroms=None, 
                  loci_indices=None,background_loci_indices=None, num_threads=10, batch_size=64, 
                  epochs=100, foreground_weight=1, 
                  background_weight=0, set_bias_as_zero=False):
@@ -259,30 +259,44 @@ class MSequenceGenerator:
         self._set_bias_as_zero = set_bias_as_zero
 
         #: path to the reference genome
-        self._reference = reference_genome
+        self._reference = {}
+        for i in range(self._num_tasks):
+            self._reference[i] = self._tasks[i]['reference']['genome']
 
         #: dataframe of the chromosomes and their corresponding sizes
-        self._chrom_sizes_df = pd.read_csv(
-            chrom_sizes, sep='\t', header=None, names=['chrom', 'size']) 
+        self._chrom_sizes = {}
+        for i in range(self._num_tasks):
+            self._chrom_sizes[i] = pd.read_csv(
+            self._tasks[i]['reference']['chrom_sizes'], sep='\t', header=None, names=['chrom', 'size']) 
 
         #: list of chromosomes that will be sampled for batch generation
-        self._chroms = chroms
+        #: assume that chroms is also a list across different tasks 
+        self._chroms = {}
+        for i in range(self._num_tasks):
+            self._chroms[i] = chroms[i]
         
         #: list of indices to select rows from the 'loci' peaks file
-        self._loci_indices = loci_indices
+        self._loci_indices = {}
+        for i in range(self._num_tasks):
+            self._loci_indices[i] = loci_indices[i]
+        #self._loci_indices = loci_indices
         
         #: list of indices to select rows from the 'background_loci' peaks file
-        self._background_loci_indices = background_loci_indices
+        self._background_loci_indices = {}
+        for i in range(self._num_tasks):
+            self._background_loci_indices[i] = background_loci_indices
         
         # keep only those _chrom_sizes_df rows corresponding to the 
         # required chromosomes in _chroms
-        if self._chroms != None:
-            self._chrom_sizes_df = self._chrom_sizes_df[
-                self._chrom_sizes_df['chrom'].isin(self._chroms)]
+        for i in range(self._num_tasks):
+            if self._chroms[i] != None:
+                self._chrom_sizes[i] = self._chrom_sizes[i][
+                    self._chrom_sizes[i]['chrom'].isin(self._chroms[i])]
 
         # generate a new column for sampling weights of the chromosomes
-        self._chrom_sizes_df['weights'] = \
-            (self._chrom_sizes_df['size'] / self._chrom_sizes_df['size'].sum())
+        for i in range(self._num_tasks):
+            self._chrom_sizes[i]['weights'] = \
+                (self._chrom_sizes[i]['size'] / self._chrom_sizes[i]['size'].sum())
 
         #: number of parallel threads for batch generation 
         self._num_threads = num_threads
@@ -316,7 +330,7 @@ class MSequenceGenerator:
         
         # size of each loci dataframe
         # we expect this to be the same for each epoch
-        self._loci_size = [] 
+        self._loci_size = []
         
         # resized loci for each epoch for multithreaded load balancing
         self._resized_loci = []
@@ -339,10 +353,14 @@ class MSequenceGenerator:
             if self._mode == 'test':
                 loci_keys = ['loci']                
             
-            #: pandas dataframe of aggregated loci across all tasks
+            #: returns python dictionary of tasks. 
+            #: Each task of tasks has a pandas dataframe of loci
+            # OR: 
+            #: could merge peaks into one dataframe
+            #: add species label to determine how to grab sequences 
             peaks_df = sequtils.getPeakPositions(
                 self._tasks,
-                self._chrom_sizes_df[['chrom', 'size']], self._input_flank,
+                self._chrom_sizes, self._input_flank,
                 self._chroms,mode=self._mode,
                 loci_indices=self._loci_indices,
                 background_loci_indices=self._background_loci_indices,
@@ -350,6 +368,7 @@ class MSequenceGenerator:
                 drop_duplicates=True,
                 foreground_weight=foreground_weight, 
                 background_weight=background_weight)
+            
             self._loci.append(peaks_df)
 
             #: size of the input loci dataframe
@@ -874,11 +893,6 @@ class MBPNetSequenceGenerator(MSequenceGenerator):
                 *mode (str)*
                     'train', 'val' or 'test'
                  
-            reference_genome (str): the path to the reference genome 
-                fasta file
-                
-            chrom_sizes (str): path to the chromosome sizes file
-            
             chroms (str): the list of chromosomes that will be sampled
                 for batch generation
                 
@@ -905,8 +919,8 @@ class MBPNetSequenceGenerator(MSequenceGenerator):
                         
     """
 
-    def __init__(self, tasks_json, batch_gen_params, reference_genome, 
-                 chrom_sizes, chroms=None, loci_indices=None,
+    def __init__(self, tasks_json, batch_gen_params, 
+                 chroms=None, loci_indices=None,
                  background_loci_indices=None, num_threads=10, batch_size=64, 
                  epochs=100, foreground_weight=1, 
                  background_weight=0, set_bias_as_zero=False):
@@ -915,8 +929,8 @@ class MBPNetSequenceGenerator(MSequenceGenerator):
         self.name = "BPNet"
         
         # call base class constructor
-        super().__init__(tasks_json, batch_gen_params, reference_genome, 
-                         chrom_sizes, chroms, loci_indices, 
+        super().__init__(tasks_json, batch_gen_params, 
+                         chroms, loci_indices, 
                          background_loci_indices, num_threads, 
                          batch_size, epochs, foreground_weight, 
                          background_weight, set_bias_as_zero)
@@ -1019,8 +1033,13 @@ class MBPNetSequenceGenerator(MSequenceGenerator):
 
         # open all the signal and bias bigwig files and store the  
         # file objects in a dictionary
+        
+        # alongside, open reference genome and store the
+        # file objects in a directory
         signal_files = {}
         bias_files = {}
+        reference_genome_files = {}
+
         for task in self._tasks:
             signal_files[task] = []
             for signal_file in self._tasks[task]['signal']['source']:
@@ -1029,52 +1048,58 @@ class MBPNetSequenceGenerator(MSequenceGenerator):
             bias_files[task] = []
             for bias_file in self._tasks[task]['bias']['source']:
                 bias_files[task].append(pyBigWig.open(bias_file))
+       
+            for reference_file in self._tasks[task]['reference_genome']:
+                reference_genome_file[task].append(pyfaidx.Fasta(reference_file))
         
         # reference file to fetch sequences
-        fasta_ref = pyfaidx.Fasta(self._reference)
+        #fasta_ref = pyfaidx.Fasta(self._tasks[task]['reference_genome'])
                                           
         # iterate over the batch
-        rowCnt = 0
-        for _, row in coords.iterrows():
-            # randomly set a jitter value to move the peak summit 
-            # slightly away from the exact center (only for samples 
-            # whose weight is not 0)
-            jitter = 0
-            if self._mode == "train" and self._max_jitter and \
-                row['weight'] != 0:
+        
+        for i in range(self._num_tasks):
+            rowCnt = 0
+            # subset to just the task
+            subset = coords.loc[coords['task']==i]
+            fasta_ref = reference_genome_file[i]
+            for _, row in subset.iterrows():
+                # randomly set a jitter value to move the peak summit 
+                # slightly away from the exact center (only for samples 
+                # whose weight is not 0)
+                jitter = 0
+                if self._mode == "train" and self._max_jitter and \
+                    row['weight'] != 0:
+                    
+                    jitter = random.randint(-self._max_jitter, self._max_jitter)
                 
-                jitter = random.randint(-self._max_jitter, self._max_jitter)
-            
-            # record the jitter for this sample
-            jitters.append(jitter)
-                                          
-            # Step 1. get the sequence 
-            chrom = row['chrom']
-            # we use self._input_flank here and not self._output_flank because
-            # input_seq_len is different from output_len
-            start = row['pos'] - self._input_flank + jitter
-            end = row['pos'] + self._input_flank + jitter
-            seq = fasta_ref[chrom][start:end].seq.upper()
-            
-            if row['rev_comp']==1:
-                seq = sequtils.reverse_complement_of_sequences([seq])[0]
-
-            # collect all the sequences into a list
-            sequences.append(seq)
-            
-            start = row['pos'] - self._output_flank + jitter
-            end = row['pos'] + self._output_flank + jitter
-            
-            # record the start/end coordinates for this sample
-            coordinates.append((chrom, start, end))
-                                    
-            # track profile tracks across all tasks
-            profile_track_idx = 0
-
-            # iterate over each task and read the signal and bias
-            # values from the bigWig files
-            for i in range(self._num_tasks):
+                # record the jitter for this sample
+                jitters.append(jitter)
+                                              
+                # Step 1. get the sequence 
+                chrom = row['chrom']
+                # we use self._input_flank here and not self._output_flank because
+                # input_seq_len is different from output_len
+                start = row['pos'] - self._input_flank + jitter
+                end = row['pos'] + self._input_flank + jitter
+                seq = reference_genome_file[i][chrom][start:end].seq.upper()
                 
+                if row['rev_comp']==1:
+                    seq = sequtils.reverse_complement_of_sequences([seq])[0]
+
+                # collect all the sequences into a list
+                sequences.append(seq)
+                
+                start = row['pos'] - self._output_flank + jitter
+                end = row['pos'] + self._output_flank + jitter
+                
+                # record the start/end coordinates for this sample
+                coordinates.append((chrom, start, end))
+                                        
+                # track profile tracks across all tasks
+                profile_track_idx = 0
+
+                # iterate over each task and read the signal and bias
+                # values from the bigWig files
                 cur_num_signal_files = len(signal_files[i])
                 assert(cur_num_signal_files>0)
                 if cur_num_signal_files>2:
@@ -1142,8 +1167,8 @@ class MBPNetSequenceGenerator(MSequenceGenerator):
                                                                                         stranded=(cur_num_smoothed_bias_files==2))
 
             rowCnt += 1
-
-        fasta_ref.close()
+     
+            fasta_ref.close()
 
         # Step 4. one hot encode all the sequences in the batch 
         if len(sequences) == profile_predictions.shape[0]:
@@ -1195,6 +1220,7 @@ class MBPNetSequenceGenerator(MSequenceGenerator):
             inputs['rev_comp'] = coords['rev_comp'].values
         
         # in 'train' and 'val' mode we need outputs as well     
+        # find out what the shape of profile predictions and logcounts predictions are 
         if self._mode == 'train' or self._mode == 'val':
             outputs = {
                 'profile_predictions': profile_predictions,

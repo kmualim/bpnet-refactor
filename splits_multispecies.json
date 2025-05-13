@@ -1,5 +1,5 @@
 {
-	"athaliana": {
+	"0": {
 		"test":
 		["Chr3"],
 		"val":
@@ -7,7 +7,7 @@
 		"train":
 		["Chr1", "Chr2", "Chr5"]
 	},
-	"ahalleri": {
+	"1": {
 		"test":
 		["chr7"],
 		"val":

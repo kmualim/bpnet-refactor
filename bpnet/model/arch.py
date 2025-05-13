@@ -556,6 +556,13 @@ def BPNet(
         BPNet architecture definition
     
         Args:
+            species_tasks (dict): 
+                Structure: 
+                {
+                'human': {0: {...}, 1: {...}},
+                'mouse': {0: {...}, 1: {...}},
+                ...
+                }
             tasks (dict): dictionary of tasks info specifying
                 'signal', 'loci', and 'bias' for each task
             bpnet_params (dict): parameters to the BPNet architecture

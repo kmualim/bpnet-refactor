@@ -139,7 +139,7 @@ def reduce_lr_on_plateau(losses, current_lr, factor=0.5, patience=2,
 
 def train_and_validate(
     input_data, model_arch_name, model_arch_params_json, output_params, 
-    genome_params, batch_gen_params, hyper_params, parallelization_params, model_dir,
+    batch_gen_params, hyper_params, parallelization_params, model_dir,
     train_chroms, val_chroms, train_indices=None, 
     val_indices=None, background_train_indices=None, 
     background_val_indices=None, bias_input_data=None, 
@@ -166,9 +166,6 @@ def train_and_validate(
             output_params (dict): dictionary containing output 
                 parameters
             
-            genome_params (dict): dictionary containing genome
-                parameters
-            
             batch_gen_params (dict): dictionary containing batch
                 generation parameters
             
@@ -180,10 +177,11 @@ def train_and_validate(
                 
             model_dir (str): the path to the output directory
             
-            train_chroms (list): list of training chromosomes
+            train_chroms (dict): list of training chromosomes
             
-            val_chroms (list): list of validation chromosomes
-            
+            val_chroms (dict): list of validation chromosomes
+           
+            # haven't modified below, just focussing on chromosomes right now
             train_indices (list): list of indices that index to 
                  training peaks from the signal peaks file
                  
@@ -297,8 +295,8 @@ def train_and_validate(
 
     # instantiate the batch generator class for training
     train_gen = BatchGenerator(input_data, train_batch_gen_params, 
-                               genome_params['reference_genome'], 
-                               genome_params['chrom_sizes'],
+                               #genome_params['reference_genome'], 
+                               #genome_params['chrom_sizes'],
                                train_chroms,loci_indices=train_indices,
                                background_loci_indices=background_train_indices,
                                num_threads=parallelization_params['threads'], 
@@ -309,8 +307,8 @@ def train_and_validate(
 
     # instantiate the batch generator class for validation
     val_gen = BatchGenerator(input_data, val_batch_gen_params, 
-                             genome_params['reference_genome'], 
-                             genome_params['chrom_sizes'],
+                             #genome_params['reference_genome'], 
+                             #genome_params['chrom_sizes'],
                              val_chroms,loci_indices=val_indices,
                              background_loci_indices=background_val_indices, 
                              num_threads=parallelization_params['threads'], 
@@ -523,7 +521,7 @@ def train_and_validate(
         config = {}        
         config['input_data'] = input_data
         config['output_params'] = output_params
-        config['genome_params'] = genome_params
+        #config['genome_params'] = genome_params
         config['batch_gen_params'] = batch_gen_params
         config['hyper_params'] = hyper_params
         config['parallelization_params'] = parallelization_params
@@ -545,7 +543,7 @@ def train_and_validate(
 
 def train_and_validate_ksplits(
     input_data, model_arch_name, model_arch_params_json, output_params, 
-    genome_params, batch_gen_params, hyper_params, parallelization_params, 
+    batch_gen_params, hyper_params, parallelization_params, 
     splits, bias_input_data=None, mnll_loss_sample_weight=1.0, 
     mnll_loss_background_sample_weight=0.0,orig_multi_loss=False):
 
@@ -562,9 +560,6 @@ def train_and_validate_ksplits(
                 model architecture params
             
             output_params (dict): dictionary containing output 
-                parameters
-            
-            genome_params (dict): dictionary containing genome
                 parameters
             
             batch_gen_params (dict): dictionary containing batch
@@ -591,14 +586,17 @@ def train_and_validate_ksplits(
                 each strand is to be used
     """
     
-    chroms = genome_params['chroms']
+    #chroms = genome_params['chroms']
         
     # list of models from all of the splits
     models = []
     
     # run training for each validation/test split
-    num_splits = len(list(splits.keys()))
-    for i in range(num_splits):
+    # this is set up for each val/test split but can convert to each species
+    # make sure the keys for splits and keys for input_data is the same!
+    num_species = list(splits.keys())
+    for i in num_species:
+    #for i in range(num_splits):
         
         if output_params['automate_filenames']:
             # create a new directory using current date/time to store the
@@ -623,28 +621,37 @@ def train_and_validate_ksplits(
     
         # train & validation chromosome split
         
+        # get genome_references and chromosomes from input_data
+        #genome_params = {}
+        #if "genome_reference" in input_data[str(i)]:
+        #    genome_params[str(i)]["genome_reference"] = input_data[str(i)]["genome_reference"]
+        #    #genome_references.append(input_data[str(i)]["genome_reference"])
+        #if "chroms" in input_data[str(i)]:
+        #    genome_params[str(i)]["chroms"] = input_data[str(i)]["chroms"]
+        #    #chromosomes.append(input_data[str(i)]["chroms"])
+
         # we'll make val or val_indices_file the starting point
-        train_chroms = None
-        val_chroms = None
-        train_indices = None
-        val_indices = None
-        background_train_indices=None
-        background_val_indices=None
+        train_chroms = {}
+        val_chroms = {}
+        train_indices = []
+        val_indices = []
+        background_train_indices= []
+        background_val_indices= []
         if 'val' in splits[str(i)]:
-            val_chroms = splits[str(i)]['val']
+            val_chroms[str(i)] = splits[str(i)]['val']
             if 'train' in splits[str(i)]:
-                train_chroms = splits[str(i)]['train']
+                train_chroms[str(i)] = splits[str(i)]['train']
             # if 'test' key is present but train is not
-            elif 'test' in splits[str(i)]:
-                test_chroms = splits[str(i)]['test']
-                # take the set difference of the whole list of
-                # chroms with the union of val and test
-                train_chroms = list(set(chroms).difference(
-                    set(val_chroms + test_chroms)))
-            else:
-                # take the set difference of the whole list of
-                # chroms with val
-                train_chroms = list(set(chroms).difference(val_chroms))
+            #elif 'test' in splits[str(i)]:
+            #    test_chroms.append(splits[str(i)]['test'])
+            #    # take the set difference of the whole list of
+            #    # chroms with the union of val and test
+            #    train_chroms = list(set(chroms).difference(
+            #        set(val_chroms + test_chroms)))
+            #else:
+            #    # take the set difference of the whole list of
+            #    # chroms with val
+            #    train_chroms = list(set(chroms).difference(val_chroms))
                 
             logging.info("Train chroms: {}".format(train_chroms))
             logging.info("Val chroms: {}".format(val_chroms))
@@ -710,7 +717,8 @@ def train_and_validate_ksplits(
                 logging.info("Background Val indices length: {}".format(
                     len(background_val_indices)))
 
-        
+        # Modified it so that train and val chroms are both lists of chromosomes 
+        # This is for later training 
         logging.info("Split #{}".format(i))
         logging.info("Training chromosomes, if chromosome wise training regime: {}".format(train_chroms))
         logging.info("Validation chromosomes, if chromosome wise training regime: {}".format(val_chroms))
@@ -724,7 +732,7 @@ def train_and_validate_ksplits(
         p = mp.Process(
             target=train_and_validate, 
             args=[input_data, model_arch_name, model_arch_params_json,
-                  output_params, genome_params, batch_gen_params, hyper_params,
+                  output_params, batch_gen_params, hyper_params,
                   parallelization_params, model_dir, train_chroms, val_chroms, train_indices,
                   val_indices, background_train_indices, background_val_indices,
                   bias_input_data, mnll_loss_sample_weight, 

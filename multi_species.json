@@ -1,0 +1,58 @@
+{
+    "0": {
+        
+	"reference": {
+		"genome":["/oak/stanford/groups/akundaje/kmualim/dapseq/20250312_data/genomes/Ath.fa"],
+		"chrom_sizes":["/oak/stanford/groups/akundaje/kmualim/dapseq/20250312_data/chrom_sizes/Ath.fa.chrom.sizes"]
+	},
+	"signal": {
+            "source": [
+                "/oak/stanford/groups/akundaje/kmualim/dapseq/20250312_data/data/Arabidopsis_thaliana/AT1G77920.plus.bw",
+                "/oak/stanford/groups/akundaje/kmualim/dapseq/20250312_data/data/Arabidopsis_thaliana/AT1G77920.minus.bw"
+            ]
+        },
+        "loci": {
+            "source": [
+                "/oak/stanford/groups/akundaje/kmualim/dapseq/20250312_data/data/Arabidopsis_thaliana/Ath_TGA7_AT1G77920.1_fold15peaks.narrowPeak.gz"
+            ]
+        },
+        "bias": {
+            "source": [
+                "/oak/stanford/groups/akundaje/kmualim/dapseq/20250312_data/data/AT1G77920_control.plus.bw",
+                "/oak/stanford/groups/akundaje/kmualim/dapseq/20250312_data/data/AT1G77920_control.minus.bw"
+            ],
+            "smoothing": [
+                null,
+                null
+            ]
+        }
+    },
+    
+    "1": {
+	"reference": {
+		"genome":["/oak/stanford/groups/akundaje/kmualim/dapseq/20250312_data/genomes/Aha.fa"],
+		"chrom_sizes":["/oak/stanford/groups/akundaje/kmualim/dapseq/20250312_data/chrom_sizes/Aha.fa.chrom.sizes"]
+		},
+	"signal": {
+		"source": [
+		"/oak/stanford/groups/akundaje/kmualim/dapseq/20250312_data/data/Arabidopsis_halleri/Ah2G30170.plus.bw",
+		"/oak/stanford/groups/akundaje/kmualim/dapseq/20250312_data/data/Arabidopsis_halleri/Ah2G30170.minus.bw"
+		]
+		},
+	"loci": {
+		"source": [
+		"/oak/stanford/groups/akundaje/kmualim/dapseq/20250312_data/data/Arabidopsis_halleri/Aha_TGA7_Ah2G30170.1_fold15peaks.narrowPeak"
+		]
+		},
+	"bias": {
+		"source": [
+			"/oak/stanford/groups/akundaje/kmualim/dapseq/20250312_data/data/Arabidopsis_halleri/96P753_96P748.control.plus.bw",
+			"/oak/stanford/groups/akundaje/kmualim/dapseq/20250312_data/data/Arabidopsis_halleri/96P753_96P748.control.minus.bw"
+		],
+		"smoothing": [
+			null,
+			null
+		]   
+	}
+    }
+}

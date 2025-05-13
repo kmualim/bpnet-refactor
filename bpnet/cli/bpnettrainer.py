@@ -59,10 +59,10 @@ def main():
     output_params['model_output_filename']= args.model_output_filename
     
     # genome params
-    genome_params = {}
-    genome_params['reference_genome'] = args.reference_genome
-    genome_params['chrom_sizes'] = args.chrom_sizes
-    genome_params['chroms'] = args.chroms
+    #genome_params = {}
+    #genome_params['reference_genome'] = args.reference_genome
+    #genome_params['chrom_sizes'] = args.chrom_sizes
+    #genome_params['chroms'] = args.chroms
 
     # batch generation parameters
     batch_gen_params = {}    
@@ -125,7 +125,7 @@ def main():
     # training and validation
     training.train_and_validate_ksplits(
         args.input_data, args.model_arch_name, args.model_arch_params_json,
-        output_params, genome_params, batch_gen_params, hyper_params, 
+        output_params, batch_gen_params, hyper_params, 
         parallelization_params, splits, args.input_data,         
         args.mnll_loss_sample_weight, 
         args.mnll_loss_background_sample_weight,args.orig_multi_loss)
