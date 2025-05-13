@@ -91,11 +91,13 @@ def getPeakPositions(tasks, chrom_sizes, flank,
                 information. Each task in tasks should have atleast 
                 the key 'loci' that has the path to he peaks file,
                 optional key is 'background_loci'
-            chrom_sizes (pandas.Dataframe): dataframe of chromosome 
+            chrom_sizes (dict): A python dictionary containing task information. 
+                Each task in tasks will have a dataframe of chromosome 
                 sizes with 'chrom' and 'size' columns
             flank (int): Buffer size before & after the position to  
                 ensure we dont fetch values at index < 0 & > chrom size
-            chroms (list): The list of chromosomes to include, takes
+            chroms (dict): A python dictionary containing the task information. 
+                 The list of chromosomes to include, takes
                  precedence over loci_indices. Applies to both loci
                  and background_loci
             loci_indices (list): list of indices to filter loci peaks.
@@ -111,14 +113,21 @@ def getPeakPositions(tasks, chrom_sizes, flank,
                 of 'background_loci'
             
         Returns:
-            pandas.DataFrame: 
-                two column dataframe of peak positions (chrom, pos)
+            pd.DataFrame:
+                will have a two column dataframe of peak positions (chrom, pos)
+                and a extra column on task/species label
+            #Python Dictionary: 
+            #    A python dictionary containing task information. 
+            #    Each task in tasks will have a two column dataframe 
+            #    of peak positions (chrom, pos)
             
     """
 
     # necessary for dataframe apply operation below --->>>
-    chrom_size_dict = dict(chrom_sizes.to_records(index=False))
-
+    chrom_size_dict = {}
+    for task in tasks:
+        chrom_size_dict[task] = dict(chrom_sizes[task].to_records(index=False))
+        
     # initialize an empty dataframe
     allPeaks = pd.DataFrame()    
     
@@ -141,11 +150,11 @@ def getPeakPositions(tasks, chrom_sizes, flank,
                 # keep only those rows corresponding to the required 
                 # chromosomes
                 
-                if chroms != None:
+                if chroms[task] != None:
                     # keep only those rows corresponding to the required 
                     # chromosomes
                     # applies both to loci and background_loci
-                    peaks_df = peaks_df[peaks_df['chrom'].isin(chroms)]
+                    peaks_df = peaks_df[peaks_df['chrom'].isin(chroms[task])]
                 elif loci_key == 'loci' and loci_indices != None:
                     peaks_df = peaks_df.loc[peaks_df.index[loci_indices]]
                 elif loci_key == 'background_loci' and background_loci_indices != None:
@@ -168,7 +177,7 @@ def getPeakPositions(tasks, chrom_sizes, flank,
 
                 # --->>> create a new column for chrom size
                 peaks_df["chrom_size"] = peaks_df['chrom'].apply(
-                    lambda chrom: chrom_size_dict[chrom])
+                    lambda chrom: chrom_size_dict[task][chrom])
 
                 # filter out rows where the right flank coordinate goes beyond
                 # chromosome size
@@ -216,16 +225,21 @@ def getPeakPositions(tasks, chrom_sizes, flank,
                 else:
                     peaks_df['weight'] = background_weight
                 
+                # add information about task 
+                peaks_df['task'] = task 
                 # append to all peaks data frame
-                allPeaks = pd.concat([allPeaks, peaks_df[
-                    ['chrom', 'start_coord', 'end_coord', 'pos', 'weight']]])
-
-                allPeaks = allPeaks.reset_index(drop=True)
+                #allPeaks[task] = pd.DataFrame()
+                #allPeaks[task] = peaks_df[
+                #    ['chrom', 'start_coord', 'end_coord', 'pos', 'weight']]
+                allPeaks = pd.concat([allPeaks, peaks_df[['chrom', 'start_coord', 'end_coord', 'pos', 'weight', 'task']])
+                #allPeaks[task] = allPeaks[task].drop_duplicates(ignore_index=True) #.reset_index(drop=True)
                 
                 idx += 1
     
     # drop the duplicate rows
     if drop_duplicates:
+        #for task in tasks:
+        #    allPeaks[task] = allPeaks[task].drop_duplicates(ignore_index=True)
         allPeaks = allPeaks.drop_duplicates(ignore_index=True)
         
     return allPeaks
