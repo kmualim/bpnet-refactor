@@ -63,14 +63,14 @@ def training_argsparser():
                         "generation", default=10)
             
     # reference params
-    parser.add_argument('--reference-genome', '-g', type=str, required=True,
-                        help="reference-genome")
+    #parser.add_argument('--reference-genome', '-g', type=str, required=True,
+    #                    help="reference-genome")
     
-    parser.add_argument('--chrom-sizes', '-c', type=str, required=True,
-                        help="path to chromosome sizes file")
+    #parser.add_argument('--chrom-sizes', '-c', type=str, required=True,
+    #                    help="path to chromosome sizes file")
     
-    parser.add_argument('--chroms', nargs='+', required=True,
-                        help="master list of chromosomes for the genome")
+    #parser.add_argument('--chroms', nargs='+', required=True,
+    #                    help="master list of chromosomes for the genome")
     
     parser.add_argument('--exclude-chroms', nargs='+', help="list of "
                         "chromosomes to be excluded", default=[])    
