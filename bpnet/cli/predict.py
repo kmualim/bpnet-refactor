@@ -421,8 +421,8 @@ def predict(args, pred_dir):
         args.chroms = None
     
     test_gen = BatchGenerator(
-        args.input_data, batch_gen_params, args.reference_genome, 
-        args.chrom_sizes, args.chroms, loci_indices=test_indices, num_threads=args.threads, 
+        args.input_data, batch_gen_params, 
+        args.chroms, loci_indices=test_indices, num_threads=args.threads, 
         batch_size=args.batch_size, epochs=1, set_bias_as_zero=args.set_bias_as_zero)
 
     # testing generator function

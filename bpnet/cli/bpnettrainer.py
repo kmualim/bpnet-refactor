@@ -98,15 +98,15 @@ def main():
         raise NoTracebackException(
             "Model output filename not specified")
 
-    if not os.path.exists(genome_params['reference_genome']):
-        raise NoTracebackException(
-            "Reference genome file {} does not exist".format(
-                genome_params['reference_genome'] ))
+    #if not os.path.exists(genome_params['reference_genome']):
+    #    raise NoTracebackException(
+    #        "Reference genome file {} does not exist".format(
+    #            genome_params['reference_genome'] ))
     
-    if not os.path.exists(genome_params['chrom_sizes']):
-        raise NoTracebackException(
-            "Chromosome sizes file {} does not exist".format(
-            genome_params['chrom_sizes']))
+    #if not os.path.exists(genome_params['chrom_sizes']):
+    #    raise NoTracebackException(
+    #        "Chromosome sizes file {} does not exist".format(
+    #        genome_params['chrom_sizes']))
         
     try:
         get_model = getattr(arch, args.model_arch_name)

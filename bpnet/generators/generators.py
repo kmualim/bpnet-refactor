@@ -229,17 +229,17 @@ class MSequenceGenerator:
                     "Check the file for syntax errors.".format(
                         tasks_json))
 
-        # check if the reference genome file exists
-        if not os.path.isfile(reference_genome):
-            raise NoTracebackException(
-                "File not found: {} OR you may have accidentally "
-                "specified a directory path.", reference_genome)
-        
-        # check if the chrom_sizes file exists
-        if not os.path.isfile(chrom_sizes):
-            raise NoTracebackException(
-                "File not found: {} OR you may have accidentally "
-                "specified a directory path.".format(chrom_sizes))
+#        # check if the reference genome file exists
+#        if not os.path.isfile(reference_genome):
+#            raise NoTracebackException(
+#                "File not found: {} OR you may have accidentally "
+#                "specified a directory path.", reference_genome)
+#        
+#        # check if the chrom_sizes file exists
+#        if not os.path.isfile(chrom_sizes):
+#            raise NoTracebackException(
+#                "File not found: {} OR you may have accidentally "
+#                "specified a directory path.".format(chrom_sizes))
 
         #: the number of tasks in _tasks 
         self._num_tasks = len(list(self._tasks.keys()))

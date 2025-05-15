@@ -174,11 +174,11 @@ def fastpredict_argsparser():
                         help="length of output profile", default=1000)
 
     # reference params
-    parser.add_argument('--reference-genome', type=str, required=True,
-                        help="the path to the reference genome fasta file")
+    #parser.add_argument('--reference-genome', type=str, required=True,
+    #                    help="the path to the reference genome fasta file")
     
-    parser.add_argument('--chrom-sizes', '-s', type=str, required=True,
-                        help="path to chromosome sizes file")
+    #parser.add_argument('--chrom-sizes', '-s', type=str, required=True,
+    #                    help="path to chromosome sizes file")
     
     # input data params
     parser.add_argument('--chroms', nargs='+', default=None,

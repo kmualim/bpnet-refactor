@@ -18,8 +18,8 @@
         },
         "bias": {
             "source": [
-                "/oak/stanford/groups/akundaje/kmualim/dapseq/20250312_data/data/AT1G77920_control.plus.bw",
-                "/oak/stanford/groups/akundaje/kmualim/dapseq/20250312_data/data/AT1G77920_control.minus.bw"
+                "/oak/stanford/groups/akundaje/kmualim/dapseq/20250312_data/data/Arabidopsis_thaliana/AT1G77920_control.plus.bw",
+                "/oak/stanford/groups/akundaje/kmualim/dapseq/20250312_data/data/Arabidopsis_thaliana/AT1G77920_control.minus.bw"
             ],
             "smoothing": [
                 null,
